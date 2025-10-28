@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Finance Manager - Login</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css"
+    />
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
+
+    <style>
+      .tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .tab-button {
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border: none;
+        background-color: var(--pico-background-color);
+        border-bottom: 2px solid transparent;
+      }
+      .tab-button.active {
+        border-bottom: 2px solid var(--pico-primary);
+        font-weight: bold;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+    </style>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        // Alterna abas
+        function showTab(tabId) {
+          document
+            .querySelectorAll(".tab-button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((content) => content.classList.remove("active"));
+          document.getElementById(tabId).classList.add("active");
+          document
+            .querySelector(`[data-tab="${tabId}"]`)
+            .classList.add("active");
+        }
+
+        showTab("login-tab"); // ativa aba padrão
+
+        // Intercepta respostas do htmx
+        document.body.addEventListener("htmx:afterRequest", function (event) {
+          try {
+            const xhr = event.detail.xhr;
+            const responseText = xhr.responseText || xhr.response;
+            const status = xhr.status;
+
+            if (!responseText) return;
+
+            const data = JSON.parse(responseText);
+
+            if (data.access_token) {
+              localStorage.setItem("token", data.access_token);
+              console.log("Token salvo:", data.access_token);
+              window.location.href = "dashboard.html";
+            } else if (status === 201) {
+              console.log("Usuário criado com sucesso");
+              window.location.href = "dashboard.html";
+            }
+          } catch (e) {
+            console.error("Erro ao processar resposta htmx:", e);
+          }
+        });
+
+        // Envia token automaticamente em requisições htmx
+        document.body.addEventListener("htmx:configRequest", function (event) {
+          const token = localStorage.getItem("token");
+          if (token) {
+            event.detail.headers["Authorization"] = "Bearer " + token;
+          }
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <main class="container">
+      <h1>💰 Finance Manager</h1>
+
+      <!-- Abas -->
+      <div class="tabs">
+        <button
+          class="tab-button"
+          data-tab="login-tab"
+          onclick="showTab('login-tab')"
+        >
+          Login
+        </button>
+        <button
+          class="tab-button"
+          data-tab="register-tab"
+          onclick="showTab('register-tab')"
+        >
+          Registrar
+        </button>
+      </div>
+
+      <!-- Aba Login -->
+      <section id="login-tab" class="tab-content">
+        <form
+          hx-post="http://127.0.0.1:8000/auth/login"
+          hx-target="#login-result"
+          hx-swap="none"
+        >
+          <input type="email" name="username" placeholder="Email" required />
+          <input type="password" name="password" placeholder="Senha" required />
+          <button type="submit">Entrar</button>
+        </form>
+        <div id="login-result"></div>
+      </section>
+
+      <!-- Aba Registro -->
+      <section id="register-tab" class="tab-content">
+        <form
+          hx-post="http://127.0.0.1:8000/auth/register"
+          hx-ext="json-enc"
+          hx-encoding="json"
+          hx-target="#register-result"
+          hx-swap="none"
+        >
+          <input type="text" name="name" placeholder="Nome" required />
+          <input type="email" name="email" placeholder="Email" required />
+          <input type="password" name="password" placeholder="Senha" required />
+          <button type="submit">Registrar</button>
+        </form>
+        <div id="register-result"></div>
+      </section>
+    </main>
+  </body>
+</html>

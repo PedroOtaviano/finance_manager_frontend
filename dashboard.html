@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Finance Manager - Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css"
+    />
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
+
+    <script>
+      function updateBalance() {
+        htmx.trigger("#balance", "load");
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+
+        // Redireciona se não estiver logado
+        if (!token) {
+          alert("Você precisa estar logado para acessar o dashboard.");
+          window.location.href = "index.html";
+          return;
+        }
+
+        // Injeta o token nas requisições HTMX
+        document.body.addEventListener("htmx:configRequest", function (event) {
+          event.detail.headers["Authorization"] = "Bearer " + token;
+        });
+
+        // Dispara manualmente os hx-get após garantir que o token foi injetado
+        htmx.trigger("#balance", "load");
+        htmx.trigger("#trends", "load");
+        htmx.trigger("#transactions", "load");
+      });
+
+      // Função de logout
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+      }
+    </script>
+
+    <style>
+      .positive {
+        color: green;
+        font-weight: bold;
+      }
+      .negative {
+        color: red;
+        font-weight: bold;
+      }
+      .logout {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <button class="logout" onclick="logout()">Sair</button>
+      <h1>📊 Dashboard Financeiro</h1>
+
+      <!-- Saldo atual -->
+      <section>
+        <h2>Saldo Atual</h2>
+        <div
+          id="balance"
+          hx-get="http://127.0.0.1:8000/dashboard/summary_html?month=10&year=2025"
+          hx-swap="innerHTML"
+        >
+          Carregando saldo...
+        </div>
+      </section>
+
+      <!-- Tendência -->
+      <section>
+        <h2>Tendência dos últimos meses</h2>
+        <div
+          id="trends"
+          hx-get="http://127.0.0.1:8000/dashboard/trends_html?months=6"
+          hx-swap="innerHTML"
+        >
+          Carregando gráfico...
+        </div>
+      </section>
+
+      <!-- Transações -->
+      <section>
+        <h2>Transações</h2>
+        <div
+          id="transactions"
+          hx-get="http://127.0.0.1:8000/transactions/"
+          hx-swap="innerHTML"
+        >
+          Carregando transações...
+        </div>
+      </section>
+
+      <!-- Nova transação -->
+      <section>
+        <h2>Adicionar Transação</h2>
+        <form
+          hx-post="http://127.0.0.1:8000/transactions/"
+          hx-ext="json-enc"
+          hx-encoding="json"
+          hx-target="#transactions"
+          hx-swap="outerHTML"
+          hx-on="htmx:afterRequest: updateBalance"
+        >
+          <select name="category_id" required>
+            <option value="1">Salário</option>
+            <option value="2">Aluguel</option>
+            <option value="3">Transporte</option>
+            <!-- Adicione mais categorias conforme seu banco -->
+          </select>
+
+          <select name="type" required>
+            <option value="income">Receita</option>
+            <option value="expense">Despesa</option>
+          </select>
+
+          <input type="number" name="amount" placeholder="Valor" required />
+
+          <input type="date" name="date" required />
+
+          <input type="text" name="note" placeholder="Observação (opcional)" />
+
+          <button type="submit">Adicionar</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
