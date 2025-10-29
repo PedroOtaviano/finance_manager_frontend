@@ -11,21 +11,46 @@
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
 
     <style>
+      body {
+        background-color: #121212;
+        color: #e5e5e5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      main.container {
+        background: #1e1e1e;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        max-width: 400px;
+        width: 100%;
+      }
+      h1 {
+        text-align: center;
+        color: #60a5fa;
+        margin-bottom: 1.5rem;
+      }
       .tabs {
         display: flex;
+        justify-content: center;
         gap: 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
       }
       .tab-button {
         cursor: pointer;
         padding: 0.5rem 1rem;
         border: none;
-        background-color: var(--pico-background-color);
+        background: transparent;
+        color: #e5e5e5;
         border-bottom: 2px solid transparent;
+        transition: 0.2s;
       }
       .tab-button.active {
-        border-bottom: 2px solid var(--pico-primary);
+        border-bottom: 2px solid #3b82f6;
         font-weight: bold;
+        color: #60a5fa;
       }
       .tab-content {
         display: none;
@@ -33,25 +58,48 @@
       .tab-content.active {
         display: block;
       }
+      form {
+        display: grid;
+        gap: 1rem;
+      }
+      form input,
+      form button {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.4rem;
+        border: 1px solid #333;
+        background: #2a2a2a;
+        color: #e5e5e5;
+      }
+      form input::placeholder {
+        color: #9ca3af;
+      }
+      form button {
+        background: #3b82f6;
+        border: none;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      form button:hover {
+        background: #2563eb;
+      }
     </style>
 
     <script>
-      window.addEventListener("DOMContentLoaded", () => {
-        // Alterna abas
-        function showTab(tabId) {
-          document
-            .querySelectorAll(".tab-button")
-            .forEach((btn) => btn.classList.remove("active"));
-          document
-            .querySelectorAll(".tab-content")
-            .forEach((content) => content.classList.remove("active"));
-          document.getElementById(tabId).classList.add("active");
-          document
-            .querySelector(`[data-tab="${tabId}"]`)
-            .classList.add("active");
-        }
+      function showTab(tabId) {
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => content.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+        document.querySelector(`[data-tab="${tabId}"]`).classList.add("active");
+      }
 
-        showTab("login-tab"); // ativa aba padrão
+      window.addEventListener("DOMContentLoaded", () => {
+        showTab("login-tab");
 
         // Intercepta respostas do htmx
         document.body.addEventListener("htmx:afterRequest", function (event) {
@@ -66,10 +114,8 @@
 
             if (data.access_token) {
               localStorage.setItem("token", data.access_token);
-              console.log("Token salvo:", data.access_token);
               window.location.href = "dashboard.html";
             } else if (status === 201) {
-              console.log("Usuário criado com sucesso");
               window.location.href = "dashboard.html";
             }
           } catch (e) {
